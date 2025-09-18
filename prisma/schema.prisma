@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  FARMER
+  BROKER
+  BUYER
+}
+
+model User {
+  id               String    @id // Firebase UID
+  email            String    @unique
+  name             String?
+  role             UserRole?
+  state            String?
+  city             String?
+  businessCategories String[] // Array of business categories
+  profileCompleted Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  @@map("users")
+}
