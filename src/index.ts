@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 
 import { verifyFirebaseToken } from "./middleware/authMiddleware";
 import { userRouter } from "./modules/users/routes";
-const nodemon = require("nodemon");
 
 // Load variables from .env file
 dotenv.config();
@@ -23,7 +22,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/api/auth", verifyFirebaseToken, async (req, res) => {
-  const { token } = req.body;
   try {
     // decoded contains user info (uid, email, etc.)
     res.json({ message: "User verified", user: (req as any).user });
@@ -38,5 +36,6 @@ app.use("/api/users", verifyFirebaseToken, userRouter);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
+  // eslint-disable-next-line no-console
   console.log(`Server listening on port ${PORT}`);
 });

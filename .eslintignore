@@ -1,0 +1,8 @@
+dist/
+node_modules/
+prisma/migrations/
+*.min.js
+*.min.ts
+.env
+.env.local
+serviceAccountKey.json
