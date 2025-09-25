@@ -1,0 +1,7 @@
+node_modules/
+.git/
+.gitignore
+*.log
+coverage/
+dist/
+build/      # if your build happens on EB, keep this; otherwise ignore

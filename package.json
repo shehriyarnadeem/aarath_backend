@@ -1,14 +1,13 @@
 {
   "name": "aarath",
   "version": "1.0.0",
-  "main": "dist/index.js",
+  "main": "src/app.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "dev:watch": "nodemon --exec ts-node src/index.ts",
+    "dev": "nodemon src/app.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "postinstall": "prisma generate",
+    "start": "node src/app.ts",
+    "postinstall": "prisma generate && prisma migrate deploy",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write src/**/*.{ts,tsx,json}",

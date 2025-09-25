@@ -11,6 +11,13 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "app.ts",
+    "middleware",
+    "modules",
+    "firebase.ts",
+    "prisma.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

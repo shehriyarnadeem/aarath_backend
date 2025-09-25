@@ -67,8 +67,19 @@ export async function getUserById(req: Request, res: Response) {
  */
 export async function updateUser(req: Request, res: Response) {
   const { id } = req.params;
-  const { name, role, state, city, businessCategories, profileCompleted } =
-    req.body;
+  const {
+    name,
+    role,
+    state,
+    city,
+    businessCategories,
+    profileCompleted,
+    whatsapp,
+    whatsappVerified,
+    accountType,
+    personal = {},
+    company = {},
+  } = req.body;
 
   try {
     const user = await prisma.user.update({
@@ -80,6 +91,26 @@ export async function updateUser(req: Request, res: Response) {
         ...(city && { city }),
         ...(businessCategories && { businessCategories }),
         ...(profileCompleted !== undefined && { profileCompleted }),
+        ...(whatsapp && { whatsapp }),
+        ...(whatsappVerified !== undefined && { whatsappVerified }),
+        ...(accountType && { accountType }),
+        // Personal fields
+        ...(personal.name && { personalName: personal.name }),
+        ...(personal.location && { personalLocation: personal.location }),
+        ...(typeof personal.profilePicture === "string" &&
+          personal.profilePicture && {
+            personalProfilePic: personal.profilePicture,
+          }),
+        // Company fields
+        ...(company.companyName && { companyName: company.companyName }),
+        ...(company.businessAddress && {
+          businessAddress: company.businessAddress,
+        }),
+        ...(company.businessRole && { businessRole: company.businessRole }),
+        ...(typeof company.companyPicture === "string" &&
+          company.companyPicture && {
+            companyPicture: company.companyPicture,
+          }),
       },
     });
 

@@ -22,6 +22,18 @@ model User {
   city             String?
   businessCategories String[] // Array of business categories
   profileCompleted Boolean   @default(false)
+  whatsapp         String?   // WhatsApp number
+  whatsappVerified Boolean   @default(false)
+  accountType      String?   // 'personal' or 'company'
+  // Personal fields
+  personalName     String?
+  personalLocation String?
+  personalProfilePic String?
+  // Company fields
+  companyName      String?
+  businessAddress  String?
+  businessRole     String?
+  companyPicture   String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   
