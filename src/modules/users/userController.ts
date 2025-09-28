@@ -16,27 +16,101 @@ export async function getUsers(req: Request, res: Response) {
 
 /**
  * Create a new user in the database.
- * Expects an object with `id` (Firebase UID), `email` and optionally `name` in the request body.
+ * Expects an object with `id` (Firebase UID), `email`, `businessName`, `whatsapp`, `state`, `city`, `role`, and `businessCategories` in the request body.
  */
 export async function createUser(req: Request, res: Response) {
-  const { id, email, name } = req.body;
+  const {
+    id,
+    email,
+    businessName,
+    whatsapp,
+    state,
+    city,
+    role,
+    businessCategories,
+  } = req.body;
 
-  if (!id || !email) {
-    return res.status(400).json({ error: "ID and email are required" });
+  if (!id || !whatsapp) {
+    return res
+      .status(400)
+      .json({ error: "ID and WhatsApp/mobile number are required" });
   }
 
   try {
     const user = await prisma.user.create({
       data: {
         id,
-        email,
-        name,
+        email: email === "" ? null : email,
+        businessName,
+        whatsapp,
+        state,
+        city,
+        role,
+        businessCategories,
       },
     });
     res.status(201).json(user);
   } catch (error) {
     console.error("Error creating user:", error);
     res.status(500).json({ error: "Failed to create user" });
+  }
+}
+
+/**
+ * Create a new user after onboarding completion and return user + session
+ * Expects: { id, email, businessName, whatsapp, state, city, role, businessCategories }
+ * Returns: user object and Firebase custom token
+ */
+export async function createUserWithSession(req: Request, res: Response) {
+  const {
+    email,
+    businessName,
+    whatsapp,
+    state,
+    city,
+    role,
+    businessCategories,
+  } = req.body;
+
+  if (!whatsapp) {
+    return res
+      .status(400)
+      .json({ error: "ID and WhatsApp/mobile number are required" });
+  }
+  try {
+    // Check for duplicate email or id
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ whatsapp }],
+      },
+    });
+    if (existingUser) {
+      return res.status(409).json({
+        error: "User with this WhatsApp/mobile or email already exists",
+      });
+    }
+    // Create user in DB
+    const userData = {
+      email: email === "" ? null : email,
+      businessName,
+      whatsapp,
+      state,
+      city,
+      role,
+      businessCategories,
+      profileCompleted: true,
+    };
+    const user = await prisma.user.create({
+      data: userData as import("@prisma/client").Prisma.UserUncheckedCreateInput,
+    });
+    // Issue Firebase custom token for session
+    const admin =
+      require("../../firebase").default || require("../../firebase");
+    const customToken = await admin.auth().createCustomToken(user.id);
+    res.status(201).json({ user, token: customToken });
+  } catch (error) {
+    console.error("Error creating user with session:", error);
+    res.status(500).json({ error: "Failed to create user and session" });
   }
 }
 
@@ -68,52 +142,30 @@ export async function getUserById(req: Request, res: Response) {
 export async function updateUser(req: Request, res: Response) {
   const { id } = req.params;
   const {
-    name,
-    role,
+    businessName,
+    whatsapp,
     state,
     city,
+    role,
     businessCategories,
     profileCompleted,
-    whatsapp,
-    whatsappVerified,
-    accountType,
-    personal = {},
-    company = {},
+    email,
   } = req.body;
 
   try {
     const user = await prisma.user.update({
       where: { id },
       data: {
-        ...(name && { name }),
-        ...(role && { role }),
+        ...(businessName && { businessName }),
+        ...(whatsapp && { whatsapp }),
         ...(state && { state }),
         ...(city && { city }),
+        ...(role && { role }),
         ...(businessCategories && { businessCategories }),
         ...(profileCompleted !== undefined && { profileCompleted }),
-        ...(whatsapp && { whatsapp }),
-        ...(whatsappVerified !== undefined && { whatsappVerified }),
-        ...(accountType && { accountType }),
-        // Personal fields
-        ...(personal.name && { personalName: personal.name }),
-        ...(personal.location && { personalLocation: personal.location }),
-        ...(typeof personal.profilePicture === "string" &&
-          personal.profilePicture && {
-            personalProfilePic: personal.profilePicture,
-          }),
-        // Company fields
-        ...(company.companyName && { companyName: company.companyName }),
-        ...(company.businessAddress && {
-          businessAddress: company.businessAddress,
-        }),
-        ...(company.businessRole && { businessRole: company.businessRole }),
-        ...(typeof company.companyPicture === "string" &&
-          company.companyPicture && {
-            companyPicture: company.companyPicture,
-          }),
+        ...(email && { email }),
       },
     });
-
     res.json(user);
   } catch (error) {
     console.error("Error updating user:", error);

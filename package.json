@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/app.ts",
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "node src/app.ts",
     "postinstall": "prisma generate && prisma migrate deploy",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.5.0",
+    "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
