@@ -24,7 +24,7 @@ router.post("/verify-otp", async (req: Request, res: Response) => {
 router.post("/verify-otp-signup", async (req: Request, res: Response) => {
   const { mobile, otp } = req.body;
   const result = await verifyOtpSignUp(mobile, otp);
-  return res.status(result.status).json(result.body);
+  return res.status(result.status).json({ success: true });
 });
 
 // Step 1: WhatsApp verification with existence check and OTP request
