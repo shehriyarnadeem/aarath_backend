@@ -6,6 +6,7 @@ import { verifyFirebaseToken } from "./middleware/authMiddleware";
 import { userRouter } from "./modules/users/routes";
 import otpAuthRoutes from "./modules/auth/otpAuthRoutes";
 import productRoutes from "./modules/products/routes";
+import path from "path";
 
 // Load variables from .env file
 dotenv.config();
@@ -14,6 +15,13 @@ const app = express();
 
 // Enable CORS for all routes (adjust origins as needed)
 app.use(cors());
+
+app.use(express.static(path.join(__dirname, "frontend_build")));
+
+// For SPA routing: all other requests go to index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend_build", "index.html"));
+});
 
 // Parse JSON request bodies (increase limit for image uploads)
 app.use(express.json({ limit: "20mb" }));
