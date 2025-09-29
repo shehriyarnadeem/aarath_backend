@@ -1,20 +1,12 @@
 import admin from "firebase-admin";
+import path from "path";
 
-if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-  throw new Error("FIREBASE_SERVICE_ACCOUNT not set");
-}
-
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-// 🔑 Fix the key formatting
-if (serviceAccount.private_key) {
-  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
-}
+const serviceAccountPath = path.join(
+  "/home/ubuntu/secrets/serviceAccountKey.json"
+);
 
 admin.initializeApp({
-  credential: admin.credential.cert(
-    require("/home/ubuntu/secrets/serviceAccountKey.json")
-  ),
+  credential: admin.credential.cert(require(serviceAccountPath)),
 });
 
 export default admin;
