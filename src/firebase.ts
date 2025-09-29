@@ -12,7 +12,9 @@ if (serviceAccount.private_key) {
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+  credential: admin.credential.cert(
+    require("/home/ubuntu/secrets/serviceAccountKey.json")
+  ),
 });
 
 export default admin;
