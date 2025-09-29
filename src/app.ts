@@ -48,12 +48,12 @@ app.use("/api/products", verifyFirebaseToken, productRoutes);
 
 // ==== Serve React frontend ====
 // Serve static files
-app.use(express.static(path.join(__dirname, "frontend_build")));
+// app.use(express.static(path.join(__dirname, "frontend_build")));
 
-// SPA fallback (after APIs)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend_build", "index.html"));
-});
+// // SPA fallback (after APIs)
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "frontend_build", "index.html"));
+// });
 
 // ==== Start server ====
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
