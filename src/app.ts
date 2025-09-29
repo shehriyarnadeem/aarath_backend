@@ -45,9 +45,9 @@ app.use("/api/users", verifyFirebaseToken, userRouter);
 // Product routes
 app.use("/api/products", verifyFirebaseToken, productRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   // eslint-disable-next-line no-console
   console.log(`Server listening on port ${PORT}`);
 });
