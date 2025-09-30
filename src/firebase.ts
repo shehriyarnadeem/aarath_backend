@@ -1,18 +1,48 @@
-const admin = require("firebase-admin");
-const dotenv = require("dotenv");
+import * as admin from "firebase-admin";
+import * as dotenv from "dotenv";
+import * as fs from "fs";
+
 dotenv.config();
 
-let serviceAccount;
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  try {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  } catch (err) {
-    console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT from .env", err);
+function initFirebase() {
+  if (admin.apps.length) return admin.app();
+
+  const jsonEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  // If JSON is provided via env, parse & use it
+  if (jsonEnv) {
+    try {
+      const parsed = JSON.parse(jsonEnv);
+      if (parsed.private_key && typeof parsed.private_key === "string") {
+        // handle escaped newlines if present
+        parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
+      }
+      admin.initializeApp({
+        credential: admin.credential.cert(parsed),
+      });
+      console.log("🔥 Firebase initialized from FIREBASE_SERVICE_ACCOUNT");
+      return admin.app();
+    } catch (err) {
+      console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:", err);
+    }
   }
+
+  // Otherwise use the credentials file via GOOGLE_APPLICATION_CREDENTIALS
+  if (credPath && fs.existsSync(credPath)) {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
+    console.log(
+      `🔥 Firebase initialized using GOOGLE_APPLICATION_CREDENTIALS at ${credPath}`
+    );
+    return admin.app();
+  }
+
+  throw new Error(
+    "No Firebase credentials found. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS."
+  );
 }
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-export default admin;
+const firebaseAdmin = initFirebase();
+export default firebaseAdmin;
