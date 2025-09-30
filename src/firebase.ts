@@ -8,10 +8,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
   } catch (err) {
     console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT from .env", err);
-    serviceAccount = require("../serviceAccountKey.json");
   }
-} else {
-  serviceAccount = require("../serviceAccountKey.json");
 }
 
 admin.initializeApp({
