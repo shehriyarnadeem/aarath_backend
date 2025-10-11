@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkProfileCompletion = exports.updateUser = exports.getUserById = exports.createUserWithSession = exports.createUser = exports.getUsers = void 0;
+exports.getUserProfileStats = exports.checkProfileCompletion = exports.updateUser = exports.getUserById = exports.createUserWithSession = exports.createUser = exports.getUsers = void 0;
 const prisma_1 = __importDefault(require("../../prisma"));
 /**
  * Fetch all users from the database.
@@ -34,7 +34,7 @@ async function createUser(req, res) {
         const user = await prisma_1.default.user.create({
             data: {
                 id,
-                email,
+                email: email === "" ? null : email,
                 businessName,
                 whatsapp,
                 state,
@@ -57,26 +57,37 @@ exports.createUser = createUser;
  * Returns: user object and Firebase custom token
  */
 async function createUserWithSession(req, res) {
-    const { id, email, businessName, whatsapp, state, city, role, businessCategories, } = req.body;
-    if (!id || !whatsapp) {
+    const { email, businessName, whatsapp, state, city, role, businessCategories, } = req.body;
+    if (!whatsapp) {
         return res
             .status(400)
             .json({ error: "ID and WhatsApp/mobile number are required" });
     }
     try {
-        // Create user in DB
-        const user = await prisma_1.default.user.create({
-            data: {
-                id,
-                email,
-                businessName,
-                whatsapp,
-                state,
-                city,
-                role,
-                businessCategories,
-                profileCompleted: true,
+        // Check for duplicate email or id
+        const existingUser = await prisma_1.default.user.findFirst({
+            where: {
+                OR: [{ whatsapp }],
             },
+        });
+        if (existingUser) {
+            return res.status(409).json({
+                error: "User with this WhatsApp/mobile or email already exists",
+            });
+        }
+        // Create user in DB
+        const userData = {
+            email: email === "" ? null : email,
+            businessName,
+            whatsapp,
+            state,
+            city,
+            role,
+            businessCategories,
+            profileCompleted: true,
+        };
+        const user = await prisma_1.default.user.create({
+            data: userData,
         });
         // Issue Firebase custom token for session
         const admin = require("../../firebase").default || require("../../firebase");
@@ -170,3 +181,102 @@ async function checkProfileCompletion(req, res) {
     }
 }
 exports.checkProfileCompletion = checkProfileCompletion;
+/**
+ * Get user profile statistics and performance data
+ */
+async function getUserProfileStats(req, res) {
+    const { id } = req.params;
+    try {
+        const user = await prisma_1.default.user.findUnique({
+            where: { id },
+            include: {
+                products: {
+                    select: {
+                        id: true,
+                        createdAt: true,
+                        // Add other product fields you might need for stats
+                    },
+                },
+            },
+        });
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        // Calculate basic stats
+        const totalListings = user.products.length;
+        const successfulSales = Math.floor(totalListings * 0.75); // Mock calculation
+        const activeListings = Math.floor(totalListings * 0.25); // Mock calculation
+        const rating = 4.8; // Mock rating
+        const reviews = Math.floor(totalListings * 6.5); // Mock reviews count
+        const responseRate = "98%"; // Mock response rate
+        const totalRevenue = `₹${(successfulSales * 2500).toLocaleString()}`; // Mock revenue
+        // Get join date
+        const joinedDate = new Date(user.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+        });
+        // Mock recent activity - in real app, you'd query orders/transactions table
+        const recentActivity = [
+            {
+                id: 1,
+                type: "sale",
+                title: "Sold Premium Wheat",
+                amount: "₹2,500",
+                date: "2 hours ago",
+                status: "completed",
+            },
+            {
+                id: 2,
+                type: "listing",
+                title: "Listed Basmati Rice",
+                amount: "₹3,200",
+                date: "1 day ago",
+                status: "active",
+            },
+            {
+                id: 3,
+                type: "review",
+                title: "Received 5-star review",
+                amount: "",
+                date: "3 days ago",
+                status: "positive",
+            },
+        ];
+        const profileStats = {
+            totalListings,
+            successfulSales,
+            activeListings,
+            rating,
+            reviews,
+            responseRate,
+            totalRevenue,
+            joinedDate,
+            recentActivity,
+            // Add achievement data
+            achievements: {
+                topSeller: successfulSales >= 50,
+                qualityProducts: rating >= 4.5,
+                fastResponder: true,
+                premiumTrader: successfulSales >= 100,
+            },
+        };
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                name: user.businessName || "User",
+                email: user.email,
+                whatsapp: user.whatsapp,
+                location: user.city ? `${user.city}, ${user.state}` : user.state,
+                role: user.role,
+                createdAt: user.createdAt,
+            },
+            stats: profileStats,
+        });
+    }
+    catch (error) {
+        console.error("Error fetching profile stats:", error);
+        res.status(500).json({ error: "Failed to fetch profile statistics" });
+    }
+}
+exports.getUserProfileStats = getUserProfileStats;

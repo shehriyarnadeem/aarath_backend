@@ -14,5 +14,7 @@ exports.userRouter.get("/:id", userController_1.getUserById);
 exports.userRouter.put("/:id", userController_1.updateUser);
 // GET /api/users/:id/profile-status → check if user profile is completed
 exports.userRouter.get("/:id/profile-status", userController_1.checkProfileCompletion);
+// GET /api/users/:id/profile-stats → get user profile statistics
+exports.userRouter.get("/:id/profile-stats", userController_1.getUserProfileStats);
 // POST /api/users/onboarding-complete → onboarding completion and session creation
 exports.userRouter.post("/onboarding-complete", userController_1.createUserWithSession);
