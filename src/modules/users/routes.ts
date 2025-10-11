@@ -6,6 +6,7 @@ import {
   updateUser,
   checkProfileCompletion,
   createUserWithSession,
+  getUserProfileStats,
 } from "./userController";
 
 export const userRouter = Router();
@@ -24,6 +25,9 @@ userRouter.put("/:id", updateUser);
 
 // GET /api/users/:id/profile-status → check if user profile is completed
 userRouter.get("/:id/profile-status", checkProfileCompletion);
+
+// GET /api/users/:id/profile-stats → get user profile statistics
+userRouter.get("/:id/profile-stats", getUserProfileStats);
 
 // POST /api/users/onboarding-complete → onboarding completion and session creation
 userRouter.post("/onboarding-complete", createUserWithSession);

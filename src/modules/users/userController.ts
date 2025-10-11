@@ -208,3 +208,108 @@ export async function checkProfileCompletion(req: Request, res: Response) {
     res.status(500).json({ error: "Failed to check profile completion" });
   }
 }
+
+/**
+ * Get user profile statistics and performance data
+ */
+export async function getUserProfileStats(req: Request, res: Response) {
+  const { id } = req.params;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        products: {
+          select: {
+            id: true,
+            createdAt: true,
+            // Add other product fields you might need for stats
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Calculate basic stats
+    const totalListings = user.products.length;
+    const successfulSales = Math.floor(totalListings * 0.75); // Mock calculation
+    const activeListings = Math.floor(totalListings * 0.25); // Mock calculation
+    const rating = 4.8; // Mock rating
+    const reviews = Math.floor(totalListings * 6.5); // Mock reviews count
+    const responseRate = "98%"; // Mock response rate
+    const totalRevenue = `₹${(successfulSales * 2500).toLocaleString()}`; // Mock revenue
+
+    // Get join date
+    const joinedDate = new Date(user.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+    });
+
+    // Mock recent activity - in real app, you'd query orders/transactions table
+    const recentActivity = [
+      {
+        id: 1,
+        type: "sale",
+        title: "Sold Premium Wheat",
+        amount: "₹2,500",
+        date: "2 hours ago",
+        status: "completed",
+      },
+      {
+        id: 2,
+        type: "listing",
+        title: "Listed Basmati Rice",
+        amount: "₹3,200",
+        date: "1 day ago",
+        status: "active",
+      },
+      {
+        id: 3,
+        type: "review",
+        title: "Received 5-star review",
+        amount: "",
+        date: "3 days ago",
+        status: "positive",
+      },
+    ];
+
+    const profileStats = {
+      totalListings,
+      successfulSales,
+      activeListings,
+      rating,
+      reviews,
+      responseRate,
+      totalRevenue,
+      joinedDate,
+      recentActivity,
+      // Add achievement data
+      achievements: {
+        topSeller: successfulSales >= 50,
+        qualityProducts: rating >= 4.5,
+        fastResponder: true, // Mock
+        premiumTrader: successfulSales >= 100,
+      },
+    };
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.businessName || "User",
+        email: user.email,
+        whatsapp: user.whatsapp,
+        location: user.city ? `${user.city}, ${user.state}` : user.state,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+      stats: profileStats,
+    });
+  } catch (error) {
+    console.error("Error fetching profile stats:", error);
+    res.status(500).json({ error: "Failed to fetch profile statistics" });
+  }
+}

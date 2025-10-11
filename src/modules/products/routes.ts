@@ -1,12 +1,22 @@
 import { Router } from "express";
-import { createProduct } from "./productController";
+import {
+  createProduct,
+  getProducts,
+  getUserProducts,
+} from "./productController";
 import prisma from "../../prisma";
 
 const router = Router();
 
 router.post("/create", createProduct);
 
-// Get products by user
+// Get all products with optional filters
+router.get("/", getProducts);
+
+// Get current user's products
+router.get("/my-products", getUserProducts);
+
+// Get products by user (keeping for backward compatibility)
 router.get("/user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
