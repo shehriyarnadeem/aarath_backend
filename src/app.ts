@@ -1,12 +1,12 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
 
 import { verifyFirebaseToken } from "./middleware/authMiddleware";
 import { userRouter } from "./modules/users/routes";
 import otpAuthRoutes from "./modules/auth/otpAuthRoutes";
 import productRoutes from "./modules/products/routes";
+import { testRouter as testRoutes } from "./modules/test/routes";
 
 // Load variables from .env file
 dotenv.config();
@@ -45,15 +45,7 @@ app.use("/api/users", verifyFirebaseToken, userRouter);
 
 // Product routes
 app.use("/api/products", verifyFirebaseToken, productRoutes);
-
-// ==== Serve React frontend ====
-// Serve static files
-// app.use(express.static(path.join(__dirname, "frontend_build")));
-
-// // SPA fallback (after APIs)
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "frontend_build", "index.html"));
-// });
+app.use("/api/test", testRoutes);
 
 // ==== Start server ====
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
