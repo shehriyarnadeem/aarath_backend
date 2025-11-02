@@ -20,6 +20,7 @@ function initFirebase() {
       }
       admin.initializeApp({
         credential: admin.credential.cert(parsed),
+        databaseURL: "https://aarath-72ec4-default-rtdb.firebaseio.com/",
       });
       console.log("🔥 Firebase initialized from FIREBASE_SERVICE_ACCOUNT");
       return admin.app();
@@ -32,6 +33,7 @@ function initFirebase() {
   if (credPath && fs.existsSync(credPath)) {
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
+      databaseURL: "https://aarath-72ec4-default-rtdb.firebaseio.com/",
     });
     console.log(
       `🔥 Firebase initialized using GOOGLE_APPLICATION_CREDENTIALS at ${credPath}`

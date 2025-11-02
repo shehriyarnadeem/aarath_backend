@@ -5,6 +5,7 @@ import {
   otpStore,
   verifyOtpSignUp,
 } from "./otpAuthController";
+import { loginUser } from "../users/userController";
 import prisma from "../../prisma";
 
 const router = Router();
@@ -25,6 +26,15 @@ router.post("/verify-otp-signup", async (req: Request, res: Response) => {
   const { mobile, otp } = req.body;
   const result = await verifyOtpSignUp(mobile, otp);
   return res.status(result.status).json({ success: true });
+});
+
+router.post("/login-whatsapp", async (req: Request, res: Response) => {
+  try {
+    await loginUser(req, res);
+  } catch (error) {
+    console.error("Error logging in with WhatsApp:", error);
+    return res.status(500).json({ error: "Failed to login with WhatsApp" });
+  }
 });
 
 // Step 1: WhatsApp verification with existence check and OTP request

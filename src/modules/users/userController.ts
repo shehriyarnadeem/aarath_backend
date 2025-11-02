@@ -174,6 +174,39 @@ export async function updateUser(req: Request, res: Response) {
 }
 
 /**
+ * Login user with WhatsApp number and return Firebase token
+ * Expects: { whatsapp }
+ * Returns: user object and Firebase custom token
+ */
+export async function loginUser(req: Request, res: Response) {
+  const { whatsapp } = req.body;
+
+  if (!whatsapp) {
+    return res
+      .status(400)
+      .json({ error: "WhatsApp/mobile number is required" });
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { whatsapp },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const admin =
+      require("../../firebase").default || require("../../firebase");
+    const customToken = await admin.auth().createCustomToken(user.id);
+
+    return res.status(200).json({ user, token: customToken });
+  } catch (error) {
+    console.error("Error logging in user:", error);
+    throw error;
+  }
+}
+/**
  * Check if user profile is completed
  */
 export async function checkProfileCompletion(req: Request, res: Response) {

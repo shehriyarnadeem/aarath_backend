@@ -3,18 +3,24 @@ import {
   createProduct,
   getProducts,
   getUserProducts,
+  getAuctionRoomDetails,
 } from "./productController";
+import { verifyFirebaseToken } from "../../middleware/authMiddleware";
 import prisma from "../../prisma";
 
 const router = Router();
 
-router.post("/create", createProduct);
+// Create product - requires authentication
+router.post("/create", verifyFirebaseToken, createProduct);
 
 // Get all products with optional filters
-router.get("/", getProducts);
+router.get("/", verifyFirebaseToken, getProducts);
 
-// Get current user's products
-router.get("/my-products", getUserProducts);
+// Get current user's products - requires authentication
+router.get("/my-products", verifyFirebaseToken, getUserProducts);
+
+// Get auction room details for a specific product
+router.get("/auction-room/:productId", getAuctionRoomDetails);
 
 // Get products by user (keeping for backward compatibility)
 router.get("/user/:userId", async (req, res) => {
