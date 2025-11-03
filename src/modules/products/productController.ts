@@ -172,10 +172,12 @@ export async function getProducts(req: Request, res: Response) {
     // Filter by auction status if specified
     if (environment !== undefined) {
       whereClause.environment = environment;
+    } else {
+      whereClause.environment = { in: ["MARKETPLACE", "AUCTION"] };
     }
 
     // Filter by category if specified
-    if (category) {
+    if (category !== "all" && category !== undefined) {
       whereClause.category = category;
     }
 

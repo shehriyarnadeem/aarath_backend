@@ -14,7 +14,7 @@ const router = Router();
 router.post("/create", verifyFirebaseToken, createProduct);
 
 // Get all products with optional filters
-router.get("/", verifyFirebaseToken, getProducts);
+router.get("/", getProducts);
 
 // Get current user's products - requires authentication
 router.get("/my-products", verifyFirebaseToken, getUserProducts);
