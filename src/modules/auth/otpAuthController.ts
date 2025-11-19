@@ -41,7 +41,7 @@ export const sendOTP = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { whatsapp } = req.body;
+  const whatsapp = req.body.whatsapp || req.body.phone || req.body.mobile;
 
   // Validate phone number format
   if (!whatsapp || !isValidPhoneNumber(whatsapp)) {
