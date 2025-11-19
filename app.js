@@ -12,6 +12,7 @@ const app = express();
 
 // Enable CORS for all routes (adjust origins as needed)
 app.use(cors());
+app.options("*", cors());
 
 // Parse JSON request bodies
 app.use(express.json());
