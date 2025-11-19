@@ -17,7 +17,17 @@ dotenv.config();
 const app = express();
 
 // Enable CORS (adjust allowed origins if needed)
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://www.aarath.app", "https://aarath.app"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+// IMPORTANT: handle OPTIONS explicitly
+app.options("*", cors());
 
 // Parse JSON request bodies
 app.use(express.json({ limit: "20mb" }));
