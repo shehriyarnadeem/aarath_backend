@@ -73,10 +73,10 @@ app.use("/api/users/onboarding-complete", userRouter);
 app.use("/api/users", verifyFirebaseToken, userRouter);
 
 // Product routes (mixed - some public, some protected)
-app.use("/api/products", productRoutes);
+app.use("/api/products", verifyFirebaseToken, productRoutes);
 
 // Auction routes (protected)
-app.use("/api/auctions", auctionRoutes);
+app.use("/api/auctions", verifyFirebaseToken, auctionRoutes);
 
 // Test routes
 app.use("/api/test", testRoutes);
