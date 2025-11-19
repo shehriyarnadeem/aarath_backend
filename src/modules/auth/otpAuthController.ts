@@ -41,6 +41,8 @@ export const sendOTP = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  res.setHeader("Access-Control-Allow-Origin", "https://www.aarath.app");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
   const whatsapp = req.body.whatsapp || req.body.phone || req.body.mobile;
 
   // Validate phone number format
