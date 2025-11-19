@@ -1,33 +1,15 @@
 import { Router, Request, Response } from "express";
-import {
-  requestOtp,
-  verifyOtp,
-  otpStore,
-  verifyOtpSignUp,
-} from "./otpAuthController";
 import { loginUser } from "../users/userController";
-import prisma from "../../prisma";
+import {
+  sendOTP,
+  verifyOTP,
+  clearExpiredOTPs,
+  getOTPStoreStats,
+} from "./otpAuthController";
 
 const router = Router();
 
-router.post("/request-otp", async (req: Request, res: Response) => {
-  const { mobile } = req.body;
-  const result = await requestOtp(mobile);
-  return res.status(result.status).json(result.body);
-});
-
-router.post("/verify-otp", async (req: Request, res: Response) => {
-  const { mobile, otp } = req.body;
-  const result = await verifyOtp(mobile, otp);
-  return res.status(result.status).json(result.body);
-});
-
-router.post("/verify-otp-signup", async (req: Request, res: Response) => {
-  const { mobile, otp } = req.body;
-  const result = await verifyOtpSignUp(mobile, otp);
-  return res.status(result.status).json({ success: true });
-});
-
+// WhatsApp login route
 router.post("/login-whatsapp", async (req: Request, res: Response) => {
   try {
     await loginUser(req, res);
@@ -37,26 +19,28 @@ router.post("/login-whatsapp", async (req: Request, res: Response) => {
   }
 });
 
-// Step 1: WhatsApp verification with existence check and OTP request
-router.post("/verify-whatsapp", async (req: Request, res: Response) => {
-  const { whatsapp } = req.body;
-  if (!whatsapp || !whatsapp.match(/^\+?\d{10,15}$/)) {
-    return res.status(400).json({ error: "Invalid WhatsApp number" });
-  }
-  // Normalize number
-  const normalized = whatsapp.replace(/[^\d]/g, "").replace(/^0+/, "");
-  // Check if user already exists
-  const user = await prisma.user.findFirst({
-    where: { whatsapp: { endsWith: normalized } },
+// Send OTP route - delegates to controller
+router.post("/send-otp", sendOTP);
+
+// Verify OTP route - delegates to controller
+router.post("/verify-otp", verifyOTP);
+
+// Utility routes for development/debugging
+router.get("/otp-stats", (req: Request, res: Response) => {
+  const stats = getOTPStoreStats();
+  res.json({
+    success: true,
+    data: stats,
   });
-  if (user) {
-    return res.status(409).json({ error: "WhatsApp number already exists" });
-  }
-  // Generate dummy OTP and save in memory
-  const otp = "123456";
-  otpStore[normalized] = otp;
-  // In real implementation, send OTP via Twilio here
-  return res.status(200).json({ success: true, message: "OTP sent", otp });
+});
+
+router.post("/clear-expired-otps", (req: Request, res: Response) => {
+  const clearedCount = clearExpiredOTPs();
+  res.json({
+    success: true,
+    message: `Cleared ${clearedCount} expired OTPs`,
+    clearedCount,
+  });
 });
 
 export default router;

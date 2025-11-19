@@ -179,9 +179,9 @@ export async function updateUser(req: Request, res: Response) {
  * Returns: user object and Firebase custom token
  */
 export async function loginUser(req: Request, res: Response) {
-  const { whatsapp } = req.body;
+  const { mobile } = req.body;
 
-  if (!whatsapp) {
+  if (!mobile) {
     return res
       .status(400)
       .json({ error: "WhatsApp/mobile number is required" });
@@ -189,7 +189,7 @@ export async function loginUser(req: Request, res: Response) {
 
   try {
     const user = await prisma.user.findFirst({
-      where: { whatsapp },
+      where: { whatsapp: mobile },
     });
 
     if (!user) {
@@ -200,7 +200,7 @@ export async function loginUser(req: Request, res: Response) {
       require("../../firebase").default || require("../../firebase");
     const customToken = await admin.auth().createCustomToken(user.id);
 
-    return res.status(200).json({ user, token: customToken });
+    return res.status(200).json({ success: true, user, token: customToken });
   } catch (error) {
     console.error("Error logging in user:", error);
     throw error;

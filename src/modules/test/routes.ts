@@ -7,6 +7,7 @@ import {
   resetCounter,
   getTestStats,
 } from "./testController";
+import { triggerWinnerNotifications } from "../../controllers/adminController";
 
 const testRouter = Router();
 
@@ -24,5 +25,7 @@ testRouter.post("/counter/:counterId/reset", resetCounter);
 
 // Get test statistics
 testRouter.get("/stats", getTestStats);
+
+testRouter.get("/trigger-notifications", triggerWinnerNotifications);
 
 export { testRouter };

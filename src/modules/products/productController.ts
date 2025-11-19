@@ -95,11 +95,23 @@ export async function createProduct(req: Request, res: Response) {
       orderBy: { serialNumber: "desc" },
     });
     const serialNumber = lastProduct ? lastProduct.serialNumber + 1 : 10000;
+
     // Calculate auction end time if it's an auction
-    const auctionEndTime =
-      auction_live && auctionDuration
-        ? new Date(Date.now() + parseInt(auctionDuration) * 60 * 60 * 1000)
-        : null;
+    let auctionEndTime = "24" as unknown as Date;
+    if (auction_live && auctionDuration) {
+      const duration = parseInt(auctionDuration);
+      let timeInMilliseconds;
+
+      if (duration >= 1 && duration <= 5) {
+        // Duration 1-5: treat as minutes
+        timeInMilliseconds = duration * 60 * 1000;
+      } else {
+        // Duration > 5: treat as hours
+        timeInMilliseconds = duration * 60 * 60 * 1000;
+      }
+
+      auctionEndTime = new Date(Date.now() + timeInMilliseconds);
+    }
 
     // Create product and auction room in a transaction
     const result = await prisma.$transaction(async (tx) => {

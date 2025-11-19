@@ -4,6 +4,7 @@ import { auctionJobs } from "../jobs/auctionJobs";
 // import { notificationJobs } from '../jobs/notificationJobs';
 // import { statsJobs } from '../jobs/statsJobs';
 import { CronJobManager } from "../jobs/cronJobs";
+import { triggerWinnerNotifications } from "../controllers/adminController";
 
 const router = Router();
 
@@ -15,13 +16,32 @@ const router = Router();
 router.post("/test/auction/expired", async (req, res) => {
   try {
     console.log("Testing expired auctions check...");
-    await auctionJobs.checkExpiredAuctions();
-    res.json({
+    const result = await auctionJobs.checkExpiredAuctions();
+    return res.json({
       success: true,
       message: "Expired auctions check completed successfully",
+      data: result,
     });
   } catch (error) {
     console.error("Error testing expired auctions check:", error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+
+router.post("/test/trigger-notifications", async (req, res) => {
+  try {
+    console.log("Testing trigger notifications...");
+    await triggerWinnerNotifications(req, res);
+    // Remove the following res.json if triggerWinnerNotifications already sends a response
+    // res.json({
+    //   success: true,
+    //   message: "Trigger notifications completed successfully",
+    // });
+  } catch (error) {
+    console.error("Error testing trigger notifications:", error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

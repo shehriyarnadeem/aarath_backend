@@ -54,10 +54,6 @@ export class AuctionService {
     } = filters;
 
     // Build where clause for filtering
-    const whereClause: any = {};
-    if (status) {
-      whereClause.status = status;
-    }
 
     // Build order by clause
     const orderByClause: any = {};
@@ -74,7 +70,6 @@ export class AuctionService {
     // Fetch auctions with comprehensive relational data
     const [auctions, totalCount] = await Promise.all([
       prisma.auctionRoom.findMany({
-        where: whereClause,
         include: {
           // Product information
           product: {
@@ -111,7 +106,6 @@ export class AuctionService {
             orderBy: {
               timestamp: "desc",
             },
-            take: 5,
             select: {
               id: true,
               amount: true,
@@ -123,9 +117,6 @@ export class AuctionService {
           },
           // Active participants
           participants: {
-            where: {
-              hasLeftRoom: false,
-            },
             select: {
               id: true,
               userName: true,
@@ -147,7 +138,7 @@ export class AuctionService {
         take: limit,
         skip: offset,
       }),
-      prisma.auctionRoom.count({ where: whereClause }),
+      prisma.auctionRoom.count(),
     ]);
 
     // Enrich auctions with calculated metrics
