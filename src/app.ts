@@ -7,7 +7,7 @@ import { userRouter } from "./modules/users/routes";
 import otpAuthRoutes from "./modules/auth/otpAuthRoutes";
 import productRoutes from "./modules/products/routes";
 import auctionRoutes from "./modules/auctions/routes";
-import { testRouter as testRoutes } from "./modules/test/routes";
+import marketPlaceRoutes from "./modules/marketplace/routes";
 import { cronTestRouter } from "./routes/cronTest";
 import { CronJobManager } from "./jobs/cronJobs";
 
@@ -66,11 +66,10 @@ app.use("/api/users", verifyFirebaseToken, userRouter);
 // Product routes (mixed - some public, some protected)
 app.use("/api/products", verifyFirebaseToken, productRoutes);
 
+app.use("/api/marketplace", marketPlaceRoutes);
+
 // Auction routes (protected)
 app.use("/api/auctions", verifyFirebaseToken, auctionRoutes);
-
-// Test routes
-app.use("/api/test", testRoutes);
 
 // Cron job test routes (admin only - should be protected in production)
 app.use("/api/admin/cron", cronTestRouter);
