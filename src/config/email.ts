@@ -16,6 +16,8 @@ const createEmailTransporter = () => {
     case "gmail":
       transportConfig = {
         service: "gmail",
+        debug: true,
+        logger: true,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
