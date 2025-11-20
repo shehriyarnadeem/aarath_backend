@@ -200,7 +200,7 @@ export const auctionJobs = {
   async checkExpiredAuctions() {
     try {
       const expiredAuctions = await getExpiredAuctions();
-
+      console.log("Expired auctions found:", expiredAuctions);
       for (const auction of expiredAuctions) {
         await this.processExpiredAuction(auction);
       }

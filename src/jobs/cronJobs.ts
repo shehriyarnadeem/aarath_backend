@@ -20,7 +20,7 @@ export class CronJobManager {
       // Auction-related jobs
       this.jobs.push(
         // Check for expired auctions every 5 minutes
-        cron.schedule("*/3 * * * *", async () => {
+        cron.schedule("*/1 * * * *", async () => {
           await auctionJobs.checkExpiredAuctions();
         })
       );
