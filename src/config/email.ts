@@ -86,9 +86,9 @@ export const sendEmail = async (
       text: message,
       html: htmlMessage || `<p>${message.replace(/\n/g, "<br>")}</p>`,
     };
-
+    console.log("mail payload", mailOptions);
     const result = await transporter.sendMail(mailOptions);
-
+    console.log("Email sent:", result);
     return {
       success: true,
       messageId: result.messageId,
