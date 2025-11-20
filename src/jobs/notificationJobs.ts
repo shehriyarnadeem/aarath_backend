@@ -273,7 +273,7 @@ export const notifyAuctionWinner = async (
     const formattedBid = winningBid.toLocaleString();
     const message = createWinnerMessage(winnerName, auctionTitle, formattedBid);
 
-    // 3. Send mandatory email notification
+    console.log("Sending mandatory email notification", winner);
     const emailResult = await sendMandatoryEmailNotification(
       winner,
       auctionTitle,

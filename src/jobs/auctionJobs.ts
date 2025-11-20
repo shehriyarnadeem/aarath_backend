@@ -222,6 +222,7 @@ export const auctionJobs = {
     try {
       // Fetch auction data from Firebase
       const firebaseData = await fetchAuctionDataFromFirebase(auction.id);
+      console.log("firebaseData", firebaseData);
       const bidsObj = firebaseData?.auctionRoom?.bids ?? {};
       const bids = formatBidsFromFirebase(bidsObj);
       const totalBids = firebaseData?.auctionRoom?.totalBids ?? 0;
@@ -237,6 +238,7 @@ export const auctionJobs = {
           currentHighestBid,
           totalBids
         );
+        console.log("updatedAuction", updatedAuction);
         devLog(`Auction ${auction.id} completed with ${bids.length} bids`);
 
         // Notify winner if there is one
@@ -289,7 +291,7 @@ export const auctionJobs = {
           undefined as Bid | undefined
         );
       }
-
+      console.log("highestBid", highestBid);
       // Prepare update data
       const updateData: AuctionUpdateData = {
         status: "ended",
@@ -300,7 +302,7 @@ export const auctionJobs = {
         currentHighestBidderId: highestBid?.userId ?? null,
         winnerId: highestBid?.userId ?? null,
       };
-
+      console.log("updateData", updateData);
       // Update auction in database
       const result = await prisma.auctionRoom.update({
         where: { id: auction.id },
