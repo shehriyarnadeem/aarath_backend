@@ -11,7 +11,7 @@ import marketPlaceRoutes from "./modules/marketplace/routes";
 import { cronTestRouter } from "./routes/cronTest";
 import { CronJobManager } from "./jobs/cronJobs";
 
-import { createUserWithSession } from "../src/modules/users/userController";
+import { createUserWithSession } from "./modules/users/userController";
 
 // Load variables from .env file
 dotenv.config();
