@@ -85,8 +85,10 @@ export async function createUserWithSession(req: Request, res: Response) {
       },
     });
     if (existingUser) {
-      return res.status(409).json({
-        error: "User with this WhatsApp/mobile or email already exists",
+      return res.status(404).json({
+        error: {
+          message: "User with this WhatsApp/mobile already exists",
+        },
       });
     }
     // Create user in DB
@@ -100,6 +102,20 @@ export async function createUserWithSession(req: Request, res: Response) {
       businessCategories,
       profileCompleted: true,
     };
+
+    const existingEmail = await prisma.user.findFirst({
+      where: {
+        OR: [{ email }],
+      },
+    });
+    if (existingEmail) {
+      return res.status(404).json({
+        error: {
+          message: "User with this email already exists",
+        },
+      });
+    }
+
     const user = await prisma.user.create({
       data: userData as import("@prisma/client").Prisma.UserUncheckedCreateInput,
     });

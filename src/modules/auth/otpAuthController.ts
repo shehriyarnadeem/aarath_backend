@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { twilioClient } from "../../config/twilio";
+import prisma from "../../prisma";
 
 // In-memory OTP store for mock verification
 // In production, consider using Redis or database for persistence
@@ -48,6 +49,17 @@ export const sendOTP = async (
     return res.status(400).json({
       success: false,
       error: "Invalid WhatsApp number format",
+    });
+  }
+
+  const existingNumber = await prisma.user.findFirst({
+    where: { whatsapp: whatsapp },
+  });
+
+  if (existingNumber) {
+    return res.status(404).json({
+      success: false,
+      error: "WhatsApp number already registered",
     });
   }
 
