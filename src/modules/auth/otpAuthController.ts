@@ -43,7 +43,7 @@ export const sendOTP = async (
   res: Response
 ): Promise<Response> => {
   const whatsapp = req.body.whatsapp || req.body.phone || req.body.mobile;
-
+  const usecase = req.body.usecase; // 'login' or 'registration'
   // Validate phone number format
   if (!whatsapp || !isValidPhoneNumber(whatsapp)) {
     return res.status(400).json({
@@ -51,16 +51,24 @@ export const sendOTP = async (
       error: "Invalid WhatsApp number format",
     });
   }
-
   const existingNumber = await prisma.user.findFirst({
     where: { whatsapp: whatsapp },
   });
 
-  if (existingNumber) {
-    return res.status(404).json({
-      success: false,
-      error: "WhatsApp number already registered",
-    });
+  if (usecase === "registration") {
+    if (existingNumber) {
+      return res.status(404).json({
+        success: false,
+        error: "WhatsApp number already registered",
+      });
+    }
+  } else if (usecase === "login") {
+    if (!existingNumber) {
+      return res.status(404).json({
+        success: false,
+        error: "WhatsApp number not registered",
+      });
+    }
   }
 
   try {
