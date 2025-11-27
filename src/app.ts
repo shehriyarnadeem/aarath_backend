@@ -11,7 +11,7 @@ import marketPlaceRoutes from "./modules/marketplace/routes";
 import { cronTestRouter } from "./routes/cronTest";
 import { CronJobManager } from "./jobs/cronJobs";
 
-import { createUserWithSession } from "./modules/users/userController";
+import { completeUserOnboarding } from "./modules/users/userController";
 
 // Load variables from .env file
 dotenv.config();
@@ -60,7 +60,7 @@ app.post("/api/auth", verifyFirebaseToken, async (req, res) => {
 });
 
 // Onboarding-complete route (no Bearer token required)
-app.use("/api/users/onboarding-complete", createUserWithSession);
+app.use("/api/users/onboarding-complete", completeUserOnboarding);
 
 // Protected user routes
 app.use("/api/users", verifyFirebaseToken, userRouter);

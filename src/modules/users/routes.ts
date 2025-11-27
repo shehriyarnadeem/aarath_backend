@@ -5,7 +5,7 @@ import {
   getUserById,
   updateUser,
   checkProfileCompletion,
-  createUserWithSession,
+  completeUserOnboarding,
   getUserProfileStats,
 } from "./userController";
 
@@ -30,4 +30,4 @@ userRouter.get("/:id/profile-status", checkProfileCompletion);
 userRouter.get("/:id/profile-stats", getUserProfileStats);
 
 // POST /api/users/onboarding-complete → onboarding completion and session creation
-userRouter.post("/onboarding-complete", createUserWithSession);
+userRouter.post("/onboarding-complete", completeUserOnboarding);

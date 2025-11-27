@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../../prisma";
+import { sendWelcomeEmail } from "../../config/email";
 
 /**
  * Fetch all users from the database.
@@ -61,45 +62,20 @@ export async function createUser(req: Request, res: Response) {
  * Expects: { id, email, businessName, whatsapp, state, city, role, businessCategories }
  * Returns: user object and Firebase custom token
  */
-export async function createUserWithSession(req: Request, res: Response) {
-  const {
-    email,
-    businessName,
-    whatsapp,
-    state,
-    city,
-    role,
-    businessCategories,
-  } = req.body;
+export async function completeUserOnboarding(req: Request, res: Response) {
+  const { email, businessName, state, city, role, businessCategories, userId } =
+    req.body;
 
-  if (!whatsapp) {
-    return res
-      .status(400)
-      .json({ error: "ID and WhatsApp/mobile number are required" });
-  }
   try {
-    // Check for duplicate email or id
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ whatsapp }],
-      },
-    });
-    if (existingUser) {
-      return res.status(404).json({
-        error: {
-          message: "User with this WhatsApp/mobile already exists",
-        },
-      });
-    }
     // Create user in DB
     const userData = {
       email: email === "" ? null : email,
-      businessName,
-      whatsapp,
-      state,
-      city,
-      role,
-      businessCategories,
+      businessName: businessName === null ? null : businessName,
+      state: state === null ? null : state,
+      city: city === null ? null : city,
+      role: role === null ? null : role,
+      businessCategories:
+        businessCategories === null ? null : businessCategories,
       profileCompleted: true,
     };
 
@@ -116,14 +92,42 @@ export async function createUserWithSession(req: Request, res: Response) {
       });
     }
 
-    const user = await prisma.user.create({
-      data: userData as import("@prisma/client").Prisma.UserUncheckedCreateInput,
+    const updateUser = await prisma.user.update({
+      where: { id: userId },
+      data: userData,
     });
-    // Issue Firebase custom token for session
-    const admin =
-      require("../../firebase").default || require("../../firebase");
-    const customToken = await admin.auth().createCustomToken(user.id);
-    res.status(201).json({ user, token: customToken });
+
+    if (email && email !== "") {
+      console.log("📧 Sending welcome email to:", email);
+
+      try {
+        const emailSent = await sendWelcomeEmail({
+          name: businessName || `${role} User`,
+          email: email,
+          role: role || "Member",
+          businessName: businessName || undefined,
+          city: city || undefined,
+          state: state || undefined,
+        });
+
+        if (emailSent) {
+          console.log("✅ Welcome email sent successfully to:", email);
+        } else {
+          console.log("⚠️ Welcome email failed to send to:", email);
+        }
+      } catch (emailError) {
+        // Don't fail the registration if email fails
+        console.error("❌ Email service error:", emailError);
+      }
+    } else {
+      console.log("⏭️ Skipping welcome email (no email provided)");
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: updateUser,
+      message: "Profile completed successfully! Welcome to Aarath 🌾",
+    });
   } catch (error) {
     console.error("Error creating user with session:", error);
     res.status(500).json({ error: "Failed to create user and session" });
@@ -142,13 +146,15 @@ export async function getUserById(req: Request, res: Response) {
     });
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
-    res.json(user);
+    return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Failed to retrieve user" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to retrieve user" });
   }
 }
 

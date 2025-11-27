@@ -99,7 +99,7 @@ export const verifyOTP = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { mobile, code } = req.body;
+  const { mobile, code, usecase } = req.body;
 
   // Validate required fields
   if (!mobile || !code) {
@@ -111,21 +111,90 @@ export const verifyOTP = async (
 
   try {
     const normalizedNumber = normalizePhoneNumber(mobile);
-
+    let otpResponse = { success: false };
+    let user = { success: false };
     if (!isLiveVerificationEnabled()) {
       // Mock verification mode
-      return await handleMockOTPVerify(normalizedNumber, code, res);
+      otpResponse = await handleMockOTPVerify(normalizedNumber, code);
+    } else {
+      otpResponse = await handleLiveOTPVerify(mobile, code);
     }
 
-    // Live verification mode using Twilio
-    return await handleLiveOTPVerify(mobile, code, res);
+    if (!otpResponse?.success) {
+      return res.status(401).json(otpResponse);
+    }
+    if (usecase === "registration" && otpResponse.success) {
+      user = await createUserWithSession(mobile);
+    } else if (usecase === "login" && otpResponse.success) {
+      user = await signInUser(mobile);
+    } else if (otpResponse?.success) {
+      return res.status(200).json({ ...otpResponse });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: { ...user },
+      otp: { ...otpResponse },
+    });
   } catch (error) {
     console.error("Error verifying OTP:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to verify OTP",
+      message: error instanceof Error ? error.message : "Unknown error",
       error: error instanceof Error ? error.message : "Unknown error",
     });
+  }
+};
+
+const signInUser = async (mobile: string) => {
+  try {
+    const user = await prisma.user.findFirst({
+      where: { whatsapp: mobile },
+    });
+
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+
+    const admin =
+      require("../../firebase").default || require("../../firebase");
+    const customToken = await admin.auth().createCustomToken(user.id);
+
+    return { success: true, token: customToken };
+  } catch (error) {
+    console.error("Error signing user:", error);
+    return { success: false, message: "Failed to sign user" };
+  }
+};
+
+const createUserWithSession = async (mobile: string) => {
+  // Create user in the database
+  try {
+    // Check for duplicate email or id
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ whatsapp: mobile }],
+      },
+    });
+    if (existingUser) {
+      return { success: false, message: "User already exists" };
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        whatsapp: mobile,
+        whatsappVerified: true,
+        profileCompleted: false,
+      } as import("@prisma/client").Prisma.UserUncheckedCreateInput,
+    });
+    // Issue Firebase custom token for session
+    const admin =
+      require("../../firebase").default || require("../../firebase");
+    const customToken = await admin.auth().createCustomToken(user.id);
+    return { success: true, token: customToken };
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return { success: false, message: "Failed to create user" };
   }
 };
 
@@ -184,40 +253,33 @@ const handleLiveOTPSend = async (
  */
 const handleMockOTPVerify = async (
   normalizedNumber: string,
-  code: string,
-  res: Response
-): Promise<Response> => {
+  code: string
+): Promise<any> => {
   const storedOtp = mockOtpStore.get(normalizedNumber);
 
   if (!storedOtp) {
-    return res.status(400).json({
+    return {
       success: false,
       message: "No OTP found. Please request a new OTP.",
-    });
+    };
   }
 
   // Check if OTP has expired
   if (Date.now() > storedOtp.expiresAt) {
     mockOtpStore.delete(normalizedNumber);
-    return res.status(400).json({
+    return {
       success: false,
       message: "OTP has expired. Please request a new one.",
-    });
+    };
   }
 
   // Verify OTP code
   if (storedOtp.otp === code) {
     // OTP verified successfully - remove from store
     mockOtpStore.delete(normalizedNumber);
-    return res.status(200).json({
-      success: true,
-      message: "OTP verified successfully (mock mode)",
-    });
+    return { success: true, message: "OTP verified successfully" };
   } else {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid OTP code",
-    });
+    return { success: false, message: "Invalid or expired OTP code" };
   }
 };
 
@@ -226,9 +288,8 @@ const handleMockOTPVerify = async (
  */
 const handleLiveOTPVerify = async (
   mobile: string,
-  code: string,
-  res: Response
-): Promise<Response> => {
+  code: string
+): Promise<any> => {
   const verificationCheck = await twilioClient.verify.v2
     .services(process.env.TWILIO_VERIFY_SERVICE_SID!)
     .verificationChecks.create({
@@ -237,16 +298,10 @@ const handleLiveOTPVerify = async (
     });
 
   if (verificationCheck.status === "approved") {
-    return res.json({
-      success: true,
-      message: "OTP verified successfully",
-    });
+    return { success: true, message: "OTP verified successfully" };
   }
 
-  return res.status(400).json({
-    success: false,
-    message: "Invalid or expired OTP code",
-  });
+  return { success: false, message: "Invalid or expired OTP code" };
 };
 
 /**
