@@ -65,8 +65,8 @@ app.use("/api/users/onboarding-complete", completeUserOnboarding);
 // Protected user routes
 app.use("/api/users", verifyFirebaseToken, userRouter);
 
-// Product routes (mixed - some public, some protected)
-app.use("/api/products", verifyFirebaseToken, productRoutes);
+// Product routes (mixed - some public, some protected, auth handled per route)
+app.use("/api/products", productRoutes);
 
 app.use("/api/marketplace", marketPlaceRoutes);
 

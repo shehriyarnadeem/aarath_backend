@@ -8,29 +8,172 @@ datasource db {
 }
 
 model Product {
-  id              String       @id @default(uuid())
-  serialNumber    Int          @unique
-  userId          String
-  category        String
-  title           String
-  description     String
-  quantity        Int
-  unit            String
-  images          String[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  price           Float?
-  priceType       String?
-  environment     ProductType  @default(MARKETPLACE)
-  user            User         @relation(fields: [userId], references: [id])
-  auctionRoom     AuctionRoom?
+  id           String @id @default(uuid())
+  serialNumber Int    @unique
+  userId       String
+
+  // Basic Product Information
+  category    String // Rice, Wheat, Cotton, etc.
+  subCategory String? // Basmati, Sella, etc.
+  title       String
+  description String
+  quantity    Int
+  unit        String // tons, kg, quintal, etc.
+  images      String[]
+
+  // Pricing Information
+  price        Int?
+  priceType    PriceType? @default(FIXED)
+  availableQty Int?       @default(1)
+  minOrderQty  Int?       @default(1)
+  maxOrderQty  Int?       @default(1)
+  pricePerUnit Int?       @default(1)
+
+  // Agricultural Specifications
+  variety String? // Rice variety, wheat type, etc.
+  type    String? @default("STANDARD")
+
+  // Quality Parameters (for grains)
+  grade    String?
+  moisture Float? // Moisture percentage
+  purity   Float? // Purity percentage
+
+  // Agricultural Details
+  farmingMethod     FarmingMethod? @default(TRADITIONAL)
+  harvestSeason     String?
+  storageConditions String? // Storage conditions
+  packagingMethod   String? // Jute bags, PP bags, etc.
+  shelfLife         String?
+
+  // Location & Availability
+  state          String?
+  city           String?
+  landMark       String?
+  availableFrom  DateTime?
+  availableUntil DateTime?
+
+  // Marketing & Engagement
+  featured     Boolean @default(false)
+  verified     Boolean @default(false)
+  favorites    Int     @default(0)
+  rating       Float?  @default(0.0)
+  reviewsCount Int     @default(0)
+
+  // Status & Environment
+  status      ProductStatus @default(ACTIVE)
+  environment ProductType?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user        User             @relation(fields: [userId], references: [id])
+  auctionRoom AuctionRoom?
+  reviews     ProductReview[]
+  inquiries   ProductInquiry[]
+
+  @@map("products")
 }
-
-
 
 enum ProductType {
   MARKETPLACE
   AUCTION
+}
+
+enum PriceType {
+  FIXED
+  NEGOTIABLE
+  AUCTION_BASED
+  BULK_DISCOUNT
+}
+
+enum ProductGrade {
+  PREMIUM
+  STANDARD
+  COMMERCIAL
+  EXPORT_QUALITY
+  GRADE_A
+  GRADE_B
+  GRADE_C
+}
+
+enum QualityType {
+  EXCELLENT
+  GOOD
+  AVERAGE
+  FAIR
+  PREMIUM
+  STANDARD
+}
+
+enum FarmingMethod {
+  ORGANIC
+  TRADITIONAL
+  MODERN
+  HYBRID
+  NATURAL
+}
+
+enum BusinessType {
+  INDIVIDUAL
+  PARTNERSHIP
+  COMPANY
+  COOPERATIVE
+  FPO
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  SOLD_OUT
+  OUT_OF_STOCK
+  DRAFT
+}
+
+model ProductReview {
+  id        String   @id @default(uuid())
+  productId String
+  userId    String
+  rating    Float // 1.0 to 5.0
+  comment   String?
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([productId, userId])
+  @@map("product_reviews")
+}
+
+model ProductInquiry {
+  id            String        @id @default(uuid())
+  productId     String
+  buyerId       String
+  sellerId      String
+  message       String
+  quantity      Int?
+  expectedPrice Float?
+  phone         String?
+  email         String?
+  status        InquiryStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  buyer   User    @relation("BuyerInquiries", fields: [buyerId], references: [id])
+  seller  User    @relation("SellerInquiries", fields: [sellerId], references: [id])
+
+  @@map("product_inquiries")
+}
+
+enum InquiryStatus {
+  PENDING
+  RESPONDED
+  CLOSED
+  CONVERTED
 }
 
 model AuctionBid {
@@ -91,30 +234,21 @@ model AuctionRoom {
   participants           AuctionParticipant[]
   product                Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
   closed                 Boolean              @default(true)
+
   @@map("auction_rooms")
 }
 
-model TestCounter {
-  id        String   @id @default(uuid())
-  counterId String   @unique @map("counter_id")
-  value     Int      @default(0)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("test_counters")
-}
-
 model User {
-  id                 String    @id @default(uuid())
-  email              String?   @unique
+  id                 String           @id @default(uuid())
+  email              String?          @unique
   name               String?
   role               UserRole?
   state              String?
   city               String?
   businessCategories String[]
-  profileCompleted   Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  profileCompleted   Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
   accountType        String?
   businessAddress    String?
   businessRole       String?
@@ -124,9 +258,13 @@ model User {
   personalName       String?
   personalProfilePic String?
   whatsapp           String?
-  whatsappVerified   Boolean   @default(false)
+  whatsappVerified   Boolean          @default(false)
   businessName       String?
+  // Relations
   products           Product[]
+  productReviews     ProductReview[]
+  buyerInquiries     ProductInquiry[] @relation("BuyerInquiries")
+  sellerInquiries    ProductInquiry[] @relation("SellerInquiries")
 
   @@map("users")
 }

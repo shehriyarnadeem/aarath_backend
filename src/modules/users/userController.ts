@@ -123,9 +123,14 @@ export async function completeUserOnboarding(req: Request, res: Response) {
       console.log("⏭️ Skipping welcome email (no email provided)");
     }
 
+    const admin =
+      require("../../firebase").default || require("../../firebase");
+    const customToken = await admin.auth().createCustomToken(userId);
+
     return res.status(200).json({
       success: true,
       user: updateUser,
+      token: customToken,
       message: "Profile completed successfully! Welcome to Aarath 🌾",
     });
   } catch (error) {

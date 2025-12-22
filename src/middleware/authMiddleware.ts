@@ -14,7 +14,6 @@ export async function verifyFirebaseToken(
   next: NextFunction
 ) {
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Authorization header missing" });
   }
