@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+.env
+serviceAccountKey.json
+prisma/migrations
+.vscode
+**/*.log

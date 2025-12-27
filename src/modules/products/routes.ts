@@ -13,7 +13,7 @@ const router = Router();
 
 // Public routes (no authentication required)
 // Get all products with optional filters (supports query parameters like ?sort=latest&minPrice=100&maxPrice=500&city=lahore)
-router.get("/", verifyFirebaseToken, getProducts);
+router.get("/", getProducts);
 
 // Specific routes (must come before dynamic /:productId route)
 // Get current user's products - requires authentication

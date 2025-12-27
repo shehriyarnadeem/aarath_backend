@@ -229,12 +229,17 @@ export async function getProducts(req: Request, res: Response) {
       minPrice,
       maxPrice,
       city,
+      category,
     } = req.query;
 
     const whereClause: any = {
       environment: "MARKETPLACE", // Always filter for MARKETPLACE products
     };
-
+    console.log("Query params:", req.query);
+    // Category filtering
+    if (category) {
+      whereClause.category = category;
+    }
     // Price range filtering
     if (minPrice || maxPrice) {
       whereClause.price = {};
@@ -298,6 +303,7 @@ export async function getProducts(req: Request, res: Response) {
               businessAddress: true,
               businessRole: true,
               products: true,
+              personalProfilePic: true,
             },
           },
         },

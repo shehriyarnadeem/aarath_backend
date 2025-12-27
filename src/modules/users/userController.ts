@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../prisma";
 import { sendWelcomeEmail } from "../../config/email";
+import { uploadImageToImgbb } from "../products/productController";
 
 /**
  * Fetch all users from the database.
@@ -63,8 +64,18 @@ export async function createUser(req: Request, res: Response) {
  * Returns: user object and Firebase custom token
  */
 export async function completeUserOnboarding(req: Request, res: Response) {
-  const { email, businessName, state, city, role, businessCategories, userId } =
-    req.body;
+  const {
+    email,
+    businessName,
+    state,
+    city,
+    role,
+    businessCategories,
+    userId,
+    latitude,
+    longitude,
+    businessAddress,
+  } = req.body;
 
   try {
     // Create user in DB
@@ -77,6 +88,9 @@ export async function completeUserOnboarding(req: Request, res: Response) {
       businessCategories:
         businessCategories === null ? null : businessCategories,
       profileCompleted: true,
+      longitude: longitude === null ? null : longitude,
+      latitude: latitude === null ? null : latitude,
+      businessAddress: businessAddress === null ? null : businessAddress,
     };
 
     const existingEmail = await prisma.user.findFirst({
@@ -177,9 +191,26 @@ export async function updateUser(req: Request, res: Response) {
     businessCategories,
     profileCompleted,
     email,
+    longitude,
+    latitude,
+    businessAddress,
+    personalProfilePicBase64,
   } = req.body;
 
   try {
+    // If a new profile picture is provided as base64, upload to CDN first
+    let profilePicUrl: string | undefined;
+    if (
+      personalProfilePicBase64 &&
+      typeof personalProfilePicBase64 === "string"
+    ) {
+      try {
+        profilePicUrl = await uploadImageToImgbb(personalProfilePicBase64);
+      } catch (err) {
+        console.error("Failed to upload profile picture:", err);
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: {
@@ -190,10 +221,14 @@ export async function updateUser(req: Request, res: Response) {
         ...(role && { role }),
         ...(businessCategories && { businessCategories }),
         ...(profileCompleted !== undefined && { profileCompleted }),
+        ...(longitude !== null && { longitude: longitude }),
+        ...(latitude !== null && { latitude: latitude }),
+        ...(businessAddress !== undefined && { businessAddress }),
         ...(email && { email }),
+        ...(profilePicUrl && { personalProfilePic: profilePicUrl }),
       },
     });
-    res.json(user);
+    return res.json({ success: true, user });
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Failed to update user" });

@@ -245,6 +245,8 @@ model User {
   role               UserRole?
   state              String?
   city               String?
+  longitude          Float?
+  latitude           Float?
   businessCategories String[]
   profileCompleted   Boolean          @default(false)
   createdAt          DateTime         @default(now())

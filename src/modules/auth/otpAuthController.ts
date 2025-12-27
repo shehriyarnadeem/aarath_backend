@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { twilioClient } from "../../config/twilio";
 import prisma from "../../prisma";
+import admin from "../../firebase";
 
 // In-memory OTP store for mock verification
 // In production, consider using Redis or database for persistence
@@ -156,9 +157,28 @@ const signInUser = async (mobile: string) => {
       return { success: false, message: "User not found" };
     }
 
-    const admin =
-      require("../../firebase").default || require("../../firebase");
-    const customToken = await admin.auth().createCustomToken(user.id);
+    // Ensure Firebase user exists with this UID
+    try {
+      await admin.auth().getUser(user.id);
+    } catch (error: any) {
+      // User doesn't exist in Firebase, create one
+      if (error.code === "auth/user-not-found") {
+        await admin.auth().createUser({
+          uid: user.id,
+          phoneNumber: mobile,
+        });
+        if (process.env.NODE_ENV === "development") {
+          console.log("✅ Created Firebase user with UID:", user.id);
+        }
+      } else {
+        throw error;
+      }
+    }
+
+    const customToken = await admin.auth().createCustomToken(String(user.id));
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔐 Generated custom token:", customToken.slice(0, 60) + "...");
+    }
 
     return { success: true, token: customToken };
   } catch (error) {
@@ -187,10 +207,26 @@ const createUserWithSession = async (mobile: string) => {
         profileCompleted: false,
       } as import("@prisma/client").Prisma.UserUncheckedCreateInput,
     });
+
+    // Create corresponding Firebase user with the same UID
+    try {
+      await admin.auth().createUser({
+        uid: user.id,
+        phoneNumber: mobile,
+      });
+      if (process.env.NODE_ENV === "development") {
+        console.log("✅ Created Firebase user with UID:", user.id);
+      }
+    } catch (error: any) {
+      // If Firebase user creation fails, log it but don't fail the whole flow
+      console.error("Warning: Firebase user creation failed:", error.message);
+    }
+
     // Issue Firebase custom token for session
-    const admin =
-      require("../../firebase").default || require("../../firebase");
-    const customToken = await admin.auth().createCustomToken(user.id);
+    const customToken = await admin.auth().createCustomToken(String(user.id));
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔐 Generated custom token:", customToken.slice(0, 60) + "...");
+    }
     return { success: true, token: customToken };
   } catch (error) {
     console.error("Error creating user:", error);
