@@ -604,8 +604,8 @@ export async function getProductById(req: Request, res: Response) {
 
     if (!userId) {
       // Public access - only show marketplace/auction products that are active
-      whereClause.environment = { in: ["MARKETPLACE", "AUCTION"] };
-      whereClause.status = "active";
+      whereClause.environment = "MARKETPLACE";
+      whereClause.status = "ACTIVE";
     }
 
     const product = await prisma.product.findFirst({
